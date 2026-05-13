@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0e17">
+<title>Daily To-Do</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:       #0b0e17;
+  --surf:     #111520;
+  --bdr:      #252d45;
+  --bdr-soft: #1b2035;
+  --txt:      #ddd8ce;
+  --muted:    #5a637f;
+  --dim:      #323852;
+  --accent:   #e8a435;
+  --acc-pale: rgba(232,164,53,.11);
+  --acc-glow: rgba(232,164,53,.22);
+  --green:    #4daa6e;
+  --blue:     #5b8cf5;
+  --blu-pale: rgba(91,140,245,.10);
+  --blu-bdr:  rgba(91,140,245,.22);
+  --teal:     #3db8a8;
+  --tel-pale: rgba(61,184,168,.09);
+  --tel-bdr:  rgba(61,184,168,.22);
+  --tap:      52px;
+  --r:        14px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:var(--bg);color:var(--txt);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  overscroll-behavior:none;
+}
+
+/* ── STICKY HEADER ─────────────────────── */
+.sticky-head{
+  position:sticky;top:0;z-index:100;
+  background:rgba(11,14,23,.93);
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--bdr-soft);
+  padding:env(safe-area-inset-top,0) 0 0;
+}
+.head-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:.8rem 1.1rem .7rem;
+}
+.date-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.15rem;}
+.date-str{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.05rem;font-weight:400;letter-spacing:.02em;
+}
+.day-chip{
+  font-size:.65rem;font-weight:500;letter-spacing:.1em;
+  padding:.18rem .55rem;border-radius:5px;
+  background:var(--acc-pale);color:var(--accent);
+  border:1px solid rgba(232,164,53,.2);
+}
+.tz-tag{font-family:'JetBrains Mono',monospace;font-size:.62rem;color:var(--muted);letter-spacing:.08em;}
+.clock-big{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.9rem;font-weight:300;letter-spacing:.04em;
+}
+.prog-strip{
+  padding:.5rem 1.1rem .55rem;
+  border-bottom:1px solid var(--bdr-soft);
+  display:flex;align-items:center;gap:.8rem;
+}
+.prog-bar{flex:1;height:3px;background:var(--bdr);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .5s ease;width:0%;}
+.prog-lbl{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.68rem;color:var(--muted);white-space:nowrap;
+}
+#pct{color:var(--accent);font-weight:500;}
+
+/* ── SCROLL BODY ────────────────────────── */
+.body-wrap{
+  padding:.9rem .85rem calc(env(safe-area-inset-bottom,0px) + 5rem);
+}
+
+/* ── CHIPS ──────────────────────────────── */
+.chips{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1.1rem;}
+.chip{
+  display:inline-flex;align-items:center;gap:.35rem;
+  font-size:.7rem;padding:.3rem .65rem;border-radius:6px;border:1px solid;
+}
+.chip.amber{background:var(--acc-pale);color:var(--accent);border-color:rgba(232,164,53,.2);}
+.chip.blue {background:var(--blu-pale);color:var(--blue);border-color:var(--blu-bdr);}
+.chip.gray {background:rgba(90,99,127,.1);color:var(--muted);border-color:var(--bdr-soft);}
+.chip-dot{width:5px;height:5px;border-radius:50%;background:currentColor;flex-shrink:0;}
+
+/* ── TIMELINE ───────────────────────────── */
+.timeline{display:flex;flex-direction:column;gap:.55rem;}
+
+.t-block{
+  display:flex;gap:.75rem;
+  opacity:0;animation:fadeUp .35s ease forwards;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+.t-spine{
+  display:flex;flex-direction:column;align-items:center;
+  width:44px;flex-shrink:0;padding-top:.85rem;
+}
+.t-lbl{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.68rem;color:var(--muted);
+  text-align:center;line-height:1.2;transition:color .3s;
+}
+.t-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--bdr);border:2px solid var(--bg);
+  margin-top:.35rem;flex-shrink:0;transition:all .3s;
+}
+.t-line{flex:1;width:1px;background:var(--bdr-soft);margin-top:.3rem;transition:opacity .3s;}
+
+.t-body{flex:1;padding-bottom:.3rem;}
+
+/* task card */
+.t-card{
+  background:var(--surf);border:1px solid var(--bdr-soft);
+  border-radius:var(--r);overflow:hidden;
+  transition:background .3s,border-color .3s;
+}
+.task-item{
+  display:flex;align-items:center;gap:.75rem;
+  min-height:var(--tap);padding:.45rem 1rem;
+  border-bottom:1px solid var(--bdr-soft);
+  cursor:pointer;transition:background .12s;
+  -webkit-user-select:none;user-select:none;
+}
+.task-item:last-child{border-bottom:none;}
+.task-item:active{background:var(--bdr-soft);}
+.cb-wrap{width:24px;height:24px;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+.task-cb{
+  width:22px;height:22px;
+  appearance:none;-webkit-appearance:none;
+  border:2px solid var(--bdr);border-radius:6px;
+  background:transparent;cursor:pointer;position:relative;transition:all .18s;
+}
+.task-cb:checked{background:var(--green);border-color:var(--green);}
+.task-cb:checked::after{
+  content:'';position:absolute;
+  left:5px;top:2px;width:9px;height:5px;
+  border-left:2.5px solid #0b0e17;
+  border-bottom:2.5px solid #0b0e17;
+  transform:rotate(-45deg);
+}
+.task-txt{
+  font-size:.9rem;font-weight:400;color:var(--txt);
+  line-height:1.4;flex:1;transition:color .2s;
+}
+.task-item.done .task-txt{text-decoration:line-through;color:var(--dim);}
+.task-item.done .task-cb{opacity:.6;}
+
+/* current badge */
+.cur-badge{
+  display:flex;align-items:center;gap:.4rem;
+  padding:.38rem 1rem;
+  background:rgba(232,164,53,.07);
+  border-bottom:1px solid rgba(232,164,53,.15);
+  font-size:.65rem;letter-spacing:.1em;color:var(--accent);font-weight:500;
+}
+.cur-pulse{
+  width:6px;height:6px;border-radius:50%;background:var(--accent);
+  animation:pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* class card */
+.class-card{
+  background:var(--tel-pale);border:1px solid var(--tel-bdr);
+  border-radius:var(--r);padding:.75rem 1rem;
+  display:flex;align-items:center;justify-content:space-between;gap:.75rem;
+  min-height:var(--tap);
+}
+.class-left{display:flex;flex-direction:column;gap:.15rem;}
+.class-period{font-size:.7rem;color:var(--muted);}
+.class-name{font-size:.95rem;font-weight:500;color:var(--teal);}
+.class-range{
+  font-family:'JetBrains Mono',monospace;
+  font-size:.7rem;color:var(--teal);opacity:.7;white-space:nowrap;
+}
+
+/* ── STATES ─────────────────────────────── */
+.t-block.past .t-lbl{color:var(--dim);}
+.t-block.past .t-dot{background:var(--dim);}
+.t-block.past .t-line{opacity:.45;}
+.t-block.past .t-card{background:rgba(17,21,32,.5);border-color:var(--bdr-soft);}
+.t-block.past .task-txt{color:var(--muted);}
+.t-block.past .task-cb{border-color:var(--dim);}
+.t-block.past .class-card{opacity:.35;}
+
+.t-block.current .t-lbl{color:var(--accent);font-weight:500;}
+.t-block.current .t-dot{
+  background:var(--accent);border-color:var(--bg);
+  box-shadow:0 0 0 3px var(--acc-glow);
+  width:10px;height:10px;
+}
+.t-block.current .t-card{
+  background:var(--acc-pale);border-color:rgba(232,164,53,.28);
+}
+
+/* ── FAB ────────────────────────────────── */
+.fab{
+  position:fixed;
+  right:1.1rem;
+  bottom:calc(env(safe-area-inset-bottom,0px) + 1.25rem);
+  width:50px;height:50px;border-radius:50%;
+  background:var(--accent);border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(232,164,53,.35);
+  transition:transform .15s,box-shadow .15s;
+  z-index:200;font-size:1.3rem;
+}
+.fab:active{transform:scale(.92);box-shadow:0 2px 10px rgba(232,164,53,.2);}
+</style>
+</head>
+<body>
+
+<div class="sticky-head">
+  <div class="head-inner">
+    <div>
+      <div class="date-row">
+        <span class="date-str" id="date-str">----.--.--</span>
+        <span class="day-chip" id="day-chip">---</span>
+      </div>
+      <div class="tz-tag">JST · OSAKA</div>
+    </div>
+    <div class="clock-big" id="clock">--:--:--</div>
+  </div>
+  <div class="prog-strip">
+    <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+    <div class="prog-lbl">
+      <span id="done-c">0</span>/<span id="tot-c">0</span>&nbsp;<span id="pct">0%</span>
+    </div>
+  </div>
+</div>
+
+<div class="body-wrap">
+  <div class="chips" id="chips"></div>
+  <div class="timeline" id="timeline"></div>
+</div>
+
+<button class="fab" id="fab" aria-label="현재 시간으로 이동">⏱</button>
+
+<script>
+/* ════════════════════════════════════════
+   UTILITIES
+════════════════════════════════════════ */
+function jst(){
+  return new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Tokyo'}));
+}
+function pad(n){ return String(n).padStart(2,'0'); }
+function toMin(s){ const[h,m]=s.split(':').map(Number); return h*60+m; }
+
+const DAY_KO  = ['일','월','화','수','목','금','토'];
+const DAY_FULL= ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+
+/* ════════════════════════════════════════
+   SCHEDULE DATA
+════════════════════════════════════════ */
+
+// 수업 교시 시간
+const PERIOD_TIME = {
+  1:{ start:'08:50', range:'08:50 – 10:20' },
+  2:{ start:'10:30', range:'10:30 – 12:00' },
+  3:{ start:'13:30', range:'13:30 – 15:00' },
+  4:{ start:'15:10', range:'15:10 – 16:40' },
+  5:{ start:'16:50', range:'16:50 – 17:20' },
+};
+
+// 요일별 수업 (0=일,1=월,...,6=토)
+const CLASS_BY_DAY = {
+  1:[ // 월
+    {p:2, name:'열학통계'},
+    {p:3, name:'선대1'},
+    {p:4, name:'선대1연의'},
+    {p:5, name:'수리과학Ⅰ (온라인)'},
+  ],
+  2:[ // 화
+    {p:1, name:'전자기학2'},
+    {p:2, name:'종합영어'},
+    {p:3, name:'기하학1'},
+    {p:4, name:'기하학1연의'},
+  ],
+  3:[ // 수
+    {p:2, name:'기초해석'},
+    {p:3, name:'기초해석연의'},
+    {p:4, name:'확률과통계'},
+    {p:5, name:'전문일본어'},
+  ],
+  4:[], // 목 — 전면 공강
+  5:[ // 금
+    {p:2, name:'벡터해석'},
+    {p:4, name:'실험수학1'},
+    {p:5, name:'경제의세계'},
+  ],
+};
+
+function classBlock(p, name){
+  const pt = PERIOD_TIME[p];
+  return { time:pt.start, type:'class', period:`${p}교시`, name, range:pt.range };
+}
+
+// 평일 생활 스케쥴 (수업 블록 제외)
+function weekdayLife(dow){
+  const noSwim = (dow === 5); // 금요일 수영 없음
+  const sched = [
+    { time:'06:00', type:'tasks', tasks:['기상','침구 청소','환기','샤워하기','침실 청소','우울한 정도 체크'] },
+    { time:'06:30', type:'tasks', tasks:['가방 체크 — 충전기','가방 체크 — 보조배터리','가방 체크 — 노트북','가방 체크 — 태블릿','가방 체크 — 필통'] },
+    { time:'07:00', type:'tasks', tasks:['아침 만들기','점심 만들기','메일 체크'] },
+    { time:'07:30', type:'tasks', tasks:['식사'] },
+    { time:'08:00', type:'tasks', tasks:['아침 약 먹기','양치하기','등교'] },
+    { time:'12:30', type:'tasks', tasks:['식사'] },
+    { time:'13:00', type:'tasks', tasks:['점심 약 먹기','양치하기'] },
+    { time:'18:30', type:'tasks', tasks:['하교'] },
+    { time:'19:00', type:'tasks', tasks:['운동'] },
+    ...( noSwim ? [] : [{ time:'20:00', type:'tasks', tasks:['수영'] }] ),
+    { time:'21:00', type:'tasks', tasks:['저녁 만들기','저녁 먹기','저녁 약 먹기','세탁 돌리기','설거지하기','양치하기'] },
+    { time:'22:00', type:'tasks', tasks:['전 수업 동안 저장한 녹음본을 txt 파일로 변환하기','메일 체크'] },
+    { time:'22:30', type:'tasks', tasks:['자기 전 일기 작성','과제 체크','피드백 (다음 AI에 반영했으면 좋을 것과 개선점 체크)'] },
+    { time:'23:00', type:'tasks', tasks:['취침 전 약 먹기','핸드폰 충전','노트북 충전','태블릿 충전','보조배터리 충전','삼성 버즈 충전','취침'] },
+  ];
+  return sched;
+}
+
+// 주말 생활 스케쥴
+const WEEKEND_LIFE = [
+  { time:'06:00', type:'tasks', tasks:['기상','침구 청소','환기','샤워하기','침실 청소','우울한 정도 체크'] },
+  { time:'06:30', type:'tasks', tasks:['가방 체크 — 충전기','가방 체크 — 보조배터리','가방 체크 — 노트북','가방 체크 — 태블릿','가방 체크 — 필통'] },
+  { time:'07:00', type:'tasks', tasks:['아침 만들기','점심 만들기'] },
+  { time:'07:30', type:'tasks', tasks:['식사'] },
+  { time:'08:00', type:'tasks', tasks:['아침 약 먹기'] },
+  { time:'12:30', type:'tasks', tasks:['식사'] },
+  { time:'13:00', type:'tasks', tasks:['점심 약 먹기'] },
+  { time:'19:00', type:'tasks', tasks:['운동'] },
+  { time:'20:00', type:'tasks', tasks:['수영'] },
+  { time:'21:00', type:'tasks', tasks:['저녁 약 먹기','식사'] },
+  { time:'22:00', type:'tasks', tasks:['이번주 수업 txt파일과 CLE 속 수업 파일, 필사본을 종합 정리본으로 전부 변환해서 한곳에 모으기'] },
+  { time:'22:30', type:'tasks', tasks:['자기 전 일기 작성','피드백 (다음 AI에 반영했으면 좋을 것과 개선점 체크)'] },
+  { time:'23:00', type:'tasks', tasks:['취침 전 약 먹기','핸드폰 충전','노트북 충전','태블릿 충전','보조배터리 충전','삼성 버즈 충전','취침'] },
+];
+
+function buildSchedule(dow){
+  const isWeekend = (dow === 0 || dow === 6);
+  if(isWeekend) return [...WEEKEND_LIFE].sort((a,b)=>toMin(a.time)-toMin(b.time));
+
+  const life    = weekdayLife(dow);
+  const classes = (CLASS_BY_DAY[dow]||[]).map(c=>classBlock(c.p,c.name));
+  return [...life,...classes].sort((a,b)=>toMin(a.time)-toMin(b.time));
+}
+
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+function storeKey(dateStr){ return 'todo_'+dateStr; }
+let STATE_KEY = '';
+let state = {};
+function loadState(dateStr){
+  STATE_KEY = storeKey(dateStr);
+  try{ state = JSON.parse(localStorage.getItem(STATE_KEY)||'{}'); }catch(e){ state={}; }
+}
+function save(){ localStorage.setItem(STATE_KEY, JSON.stringify(state)); }
+
+/* ════════════════════════════════════════
+   DATE / CLOCK
+════════════════════════════════════════ */
+function getDateStr(t){
+  return `${t.getFullYear()}.${pad(t.getMonth()+1)}.${pad(t.getDate())}`;
+}
+function getStoreDateStr(t){
+  return `${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`;
+}
+
+let lastDate = '';
+
+function tickClock(){
+  const t   = jst();
+  const ds  = getStoreDateStr(t);
+  const dsp = getDateStr(t);
+  const dow = t.getDay();
+
+  // 날짜 바뀌면 전체 리빌드
+  if(ds !== lastDate){
+    lastDate = ds;
+    loadState(ds);
+    document.getElementById('date-str').textContent = dsp;
+    document.getElementById('day-chip').textContent = DAY_FULL[dow];
+
+    // chips
+    buildChips(dow);
+
+    // timeline
+    const sched = buildSchedule(dow);
+    renderTimeline(sched);
+  }
+
+  document.getElementById('clock').textContent =
+    pad(t.getHours())+':'+pad(t.getMinutes())+':'+pad(t.getSeconds());
+
+  updateStates();
+}
+
+/* ════════════════════════════════════════
+   CHIPS
+════════════════════════════════════════ */
+function buildChips(dow){
+  const el = document.getElementById('chips');
+  el.innerHTML = '';
+
+  const isWeekend = (dow===0||dow===6);
+  addChip(el, isWeekend?'주말 스케쥴':'평일 스케쥴', 'amber');
+
+  if(!isWeekend){
+    const classes = CLASS_BY_DAY[dow]||[];
+    if(classes.length===0){
+      addChip(el,'전면 공강 (수업 없음)','gray');
+    } else {
+      addChip(el, classes.map(c=>c.name).join(' · '), 'blue');
+    }
+    if(dow===5) addChip(el,'금요일 — 수영 없음','gray');
+  }
+}
+function addChip(container, text, cls){
+  const c = document.createElement('span');
+  c.className = `chip ${cls}`;
+  c.innerHTML = `<span class="chip-dot"></span>${text}`;
+  container.appendChild(c);
+}
+
+/* ════════════════════════════════════════
+   RENDER TIMELINE
+════════════════════════════════════════ */
+let _schedule = [];
+
+function renderTimeline(sched){
+  _schedule = sched;
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '';
+
+  sched.forEach((block, bi)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 't-block';
+    wrap.dataset.bi = bi;
+    // stagger animation
+    wrap.style.animationDelay = (0.03 + bi*0.04)+'s';
+
+    // spine
+    const spine = document.createElement('div');
+    spine.className = 't-spine';
+    spine.innerHTML =
+      `<div class="t-lbl">${block.time}</div>`+
+      `<div class="t-dot"></div>`+
+      `<div class="t-line"></div>`;
+
+    // body
+    const body = document.createElement('div');
+    body.className = 't-body';
+
+    if(block.type==='class'){
+      const card = document.createElement('div');
+      card.className = 'class-card';
+      card.innerHTML =
+        `<div class="class-left">`+
+        `<span class="class-period">${block.period}</span>`+
+        `<span class="class-name">${block.name}</span></div>`+
+        `<span class="class-range">${block.range}</span>`;
+      body.appendChild(card);
+    } else {
+      const card = document.createElement('div');
+      card.className = 't-card';
+
+      block.tasks.forEach((task, ti)=>{
+        const id  = `${bi}-${ti}`;
+        const chk = !!state[id];
+
+        const item = document.createElement('label');
+        item.className = 'task-item'+(chk?' done':'');
+
+        const cbWrap = document.createElement('div');
+        cbWrap.className = 'cb-wrap';
+
+        const cb = document.createElement('input');
+        cb.type='checkbox';
+        cb.className='task-cb';
+        cb.dataset.id=id;
+        if(chk) cb.checked=true;
+
+        const txt = document.createElement('span');
+        txt.className='task-txt';
+        txt.textContent=task;
+
+        cb.addEventListener('change',function(e){
+          e.stopPropagation();
+          state[this.dataset.id]=this.checked;
+          save();
+          item.classList.toggle('done',this.checked);
+          updateProgress();
+        });
+
+        cbWrap.appendChild(cb);
+        item.appendChild(cbWrap);
+        item.appendChild(txt);
+        card.appendChild(item);
+      });
+
+      body.appendChild(card);
+    }
+
+    wrap.appendChild(spine);
+    wrap.appendChild(body);
+    tl.appendChild(wrap);
+  });
+
+  updateProgress();
+}
+
+/* ════════════════════════════════════════
+   STATES (past / current / future)
+════════════════════════════════════════ */
+function currentIdx(){
+  const t = jst();
+  const now = t.getHours()*60+t.getMinutes();
+  for(let i=0;i<_schedule.length;i++){
+    const a = toMin(_schedule[i].time);
+    const b = i<_schedule.length-1 ? toMin(_schedule[i+1].time) : 24*60;
+    if(now>=a && now<b) return i;
+  }
+  return -1;
+}
+
+function updateStates(){
+  const ci = currentIdx();
+  document.querySelectorAll('.t-block').forEach((el,i)=>{
+    el.classList.remove('past','current','future');
+    if(i<ci)       el.classList.add('past');
+    else if(i===ci) el.classList.add('current');
+    else            el.classList.add('future');
+
+    const card = el.querySelector('.t-card');
+    if(!card) return;
+    const badge = card.querySelector('.cur-badge');
+    if(i===ci && !badge){
+      const b = document.createElement('div');
+      b.className='cur-badge';
+      b.innerHTML='<div class="cur-pulse"></div>현재';
+      card.insertBefore(b,card.firstChild);
+    } else if(i!==ci && badge){
+      badge.remove();
+    }
+  });
+}
+
+function updateProgress(){
+  const all  = [...document.querySelectorAll('.task-cb')];
+  const done = all.filter(c=>c.checked).length;
+  const tot  = all.length;
+  const pct  = tot ? Math.round(done/tot*100) : 0;
+  document.getElementById('done-c').textContent = done;
+  document.getElementById('tot-c').textContent  = tot;
+  document.getElementById('pct').textContent    = pct+'%';
+  document.getElementById('prog-fill').style.width = pct+'%';
+}
+
+/* ════════════════════════════════════════
+   FAB
+════════════════════════════════════════ */
+function scrollToCurrent(){
+  const ci = currentIdx();
+  if(ci<0) return;
+  const el = document.querySelector(`.t-block[data-bi="${ci}"]`);
+  if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+}
+document.getElementById('fab').addEventListener('click',scrollToCurrent);
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+tickClock();
+setInterval(tickClock, 1000);
+setTimeout(scrollToCurrent, 700);
+</script>
+</body>
+</html>

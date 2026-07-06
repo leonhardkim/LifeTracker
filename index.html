@@ -316,18 +316,17 @@ function classBlock(p, name){
 function weekdayLife(dow){
   const noSwim = (dow === 5); // 금요일 수영 없음
   const sched = [
-    { time:'06:00', type:'tasks', tasks:['기상','침구 청소','환기','샤워하기','침실 청소','우울한 정도 체크'] },
+    { time:'06:00', type:'tasks', tasks:['기상','이미지 트레이닝','침구 청소','환기','샤워하기','침실 청소','우울한 정도 체크','CLE 캘린더 확인','KOAN 확인','Discord 메일 정리 봇 알림 확인'] },
     { time:'06:30', type:'tasks', tasks:['가방 체크 — 충전기','가방 체크 — 보조배터리','가방 체크 — 노트북','가방 체크 — 태블릿','가방 체크 — 필통'] },
-    { time:'07:00', type:'tasks', tasks:['아침 만들기','점심 만들기','메일 체크'] },
-    { time:'07:30', type:'tasks', tasks:['식사'] },
-    { time:'08:00', type:'tasks', tasks:['아침 약 먹기','양치하기','등교'] },
+    { time:'06:50', type:'tasks', tasks:['외출'] },
+    { time:'08:00', type:'tasks', tasks:['아침 약 먹기','양치하기'] },
     { time:'12:30', type:'tasks', tasks:['식사'] },
     { time:'13:00', type:'tasks', tasks:['점심 약 먹기','양치하기'] },
     { time:'18:30', type:'tasks', tasks:['하교'] },
     { time:'19:00', type:'tasks', tasks:['운동'] },
     ...( noSwim ? [] : [{ time:'20:00', type:'tasks', tasks:['수영'] }] ),
     { time:'21:00', type:'tasks', tasks:['저녁 만들기','저녁 먹기','저녁 약 먹기','세탁 돌리기','설거지하기','양치하기'] },
-    { time:'22:00', type:'tasks', tasks:['전 수업 동안 저장한 녹음본을 txt 파일로 변환하기','메일 체크'] },
+    { time:'22:00', type:'tasks', tasks:['전 수업 동안 저장한 녹음본을 txt 파일로 변환하기','메일 체크','CLE 캘린더 확인','KOAN 확인','Discord 메일 정리 봇 알림 확인'] },
     { time:'22:30', type:'tasks', tasks:['자기 전 일기 작성','과제 체크','피드백 (다음 AI에 반영했으면 좋을 것과 개선점 체크)'] },
     { time:'23:00', type:'tasks', tasks:['취침 전 약 먹기','핸드폰 충전','노트북 충전','태블릿 충전','보조배터리 충전','삼성 버즈 충전','취침'] },
   ];
@@ -336,17 +335,15 @@ function weekdayLife(dow){
 
 // 주말 생활 스케쥴
 const WEEKEND_LIFE = [
-  { time:'06:00', type:'tasks', tasks:['기상','침구 청소','환기','샤워하기','침실 청소','우울한 정도 체크'] },
+  { time:'06:00', type:'tasks', tasks:['기상','이미지 트레이닝','침구 청소','환기','샤워하기','침실 청소','우울한 정도 체크','CLE 캘린더 확인','KOAN 확인','Discord 메일 정리 봇 알림 확인'] },
   { time:'06:30', type:'tasks', tasks:['가방 체크 — 충전기','가방 체크 — 보조배터리','가방 체크 — 노트북','가방 체크 — 태블릿','가방 체크 — 필통'] },
-  { time:'07:00', type:'tasks', tasks:['아침 만들기','점심 만들기'] },
-  { time:'07:30', type:'tasks', tasks:['식사'] },
   { time:'08:00', type:'tasks', tasks:['아침 약 먹기'] },
   { time:'12:30', type:'tasks', tasks:['식사'] },
   { time:'13:00', type:'tasks', tasks:['점심 약 먹기'] },
   { time:'19:00', type:'tasks', tasks:['운동'] },
   { time:'20:00', type:'tasks', tasks:['수영'] },
   { time:'21:00', type:'tasks', tasks:['저녁 약 먹기','식사'] },
-  { time:'22:00', type:'tasks', tasks:['이번주 수업 txt파일과 CLE 속 수업 파일, 필사본을 종합 정리본으로 전부 변환해서 한곳에 모으기'] },
+  { time:'22:00', type:'tasks', tasks:['이번주 수업 txt파일과 CLE 속 수업 파일, 필사본을 종합 정리본으로 전부 변환해서 한곳에 모으기','CLE 캘린더 확인','KOAN 확인','Discord 메일 정리 봇 알림 확인'] },
   { time:'22:30', type:'tasks', tasks:['자기 전 일기 작성','피드백 (다음 AI에 반영했으면 좋을 것과 개선점 체크)'] },
   { time:'23:00', type:'tasks', tasks:['취침 전 약 먹기','핸드폰 충전','노트북 충전','태블릿 충전','보조배터리 충전','삼성 버즈 충전','취침'] },
 ];
@@ -592,4 +589,3 @@ setTimeout(scrollToCurrent, 700);
 </script>
 </body>
 </html>
-
